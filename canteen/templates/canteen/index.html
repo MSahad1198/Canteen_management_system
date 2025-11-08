@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Canteen Management System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #2563eb, #1e3a8a);
+      color: #fff;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      justify-content: center;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    }
+
+    p {
+      font-size: 1rem;
+      opacity: 0.9;
+      margin-bottom: 30px;
+    }
+
+    .btn-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    a.button {
+      display: inline-block;
+      padding: 14px 24px;
+      background: white;
+      color: #1e3a8a;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      min-width: 160px;
+    }
+
+    a.button:hover {
+      background: #f1f5f9;
+      transform: translateY(-3px);
+    }
+
+    footer {
+      position: fixed;
+      bottom: 15px;
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+
+    .logo {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+
+    .role {
+      margin-top: 20px;
+      font-weight: 500;
+      font-size: 1.1rem;
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">🍽️</div>
+  <h1>Canteen Management System</h1>
+  <p>Welcome, {{ request.user.first_name|default:request.user.username }}!</p>
+
+  <div class="btn-container">
+    {% if request.user.is_staff %}
+      <!-- Admin Menu -->
+      <a href="{% url 'admin:index' %}" class="button">⚙️ Admin Panel</a>
+      <a href="{% url 'canteen:pos' %}" class="button">💳 POS System</a>
+      <a href="{% url 'canteen:view_orders' %}" class="button">📦 Orders</a>
+      <a href="{% url 'canteen:report' %}" class="button">📊 Reports</a>
+    {% else %}
+      <!-- Cashier Menu -->
+      <a href="{% url 'canteen:pos' %}" class="button">💳 POS</a>
+      <a href="{% url 'canteen:view_orders' %}" class="button">📦 Orders</a>
+    {% endif %}
+    <a href="{% url 'logout' %}" class="button">🚪 Logout</a>
+  </div>
+
+  <div class="role">
+    {% if request.user.is_staff %}
+      Role: <b>Admin</b>
+    {% else %}
+      Role: <b>Cashier</b>
+    {% endif %}
+  </div>
+
+  <footer>© {{ now|date:"Y" }} My Canteen POS | All Rights Reserved</footer>
+</body>
+</html>

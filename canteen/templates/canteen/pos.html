@@ -1,0 +1,313 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>POS System</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f4f6f9;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #1e293b;
+    }
+    .container {
+      display: flex;
+      gap: 40px;
+      margin-top: 20px;
+    }
+   #products, #cart {
+  flex: 1;
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  max-height: 85vh;          /* 🆕 limits height relative to screen */
+  overflow-y: auto;           /* 🆕 allows vertical scrolling */
+}
+
+#product-list {
+  max-height: 80vh;           /* adjust as you like */
+  overflow-y: auto;
+  border-top: 1px solid #ddd;
+  padding-top: 10px;
+}
+
+
+    #products {
+  flex: 2;                               /* more space for item grid */
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+#product-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* responsive columns */
+  gap: 12px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-top: 10px;
+}
+
+.product-card {
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, background 0.2s ease;
+  cursor: pointer;
+}
+
+.product-card:hover {
+  background: #e2e8f0;
+  transform: scale(1.05);
+}
+
+.product-name {
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.product-price {
+  color: #334155;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.add-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.add-btn:hover {
+  background: #1e40af;
+}
+    .summary {
+      margin-top: 20px;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #1e40af;
+    }
+    input, select {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    .container {
+  display: flex;
+  gap: 30px;
+}
+
+#products { flex: 3; }   /* more space for products */
+#cart { flex: 1; }       /* less space for cart */
+
+  </style>
+</head>
+
+<body>
+<h1>🍔 Point of Sale</h1>
+
+<div class="container">
+  <div id="products">
+   <h2>Available Items</h2>
+<input type="text" id="search" placeholder="🔍 Search food..." oninput="filterProducts()" style="width:100%;padding:8px;margin:8px 0;border-radius:6px;border:1px solid #ccc;">
+<div id="product-list"></div>
+
+  </div>
+
+  <div id="cart">
+    <h2>Cart</h2>
+    <div id="cart-items"></div>
+
+    <div class="summary">
+      <p><b>Total:</b> <span id="total">0.00</span></p>
+      <p><b>Paid Amount:</b> <input id="paid_amount" placeholder="Enter paid amount" /></p>
+      <p><b>Change:</b> <span id="change">0.00</span></p>
+      <p><b>Payment Method:</b>
+        <select id="payment_method">
+          <option value="cash">Cash</option>
+          <option value="card">Card</option>
+          <option value="wallet">Mobile Wallet</option>
+        </select>
+      </p>
+      <button onclick="checkout()">Checkout</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let cart = [];
+let allProducts = []; // store all products globally
+
+
+// ✅ Load available products
+async function loadProducts() {
+  const res = await fetch("{% url 'canteen:api_products' %}");
+  const data = await res.json();
+  allProducts = data.products; // store all
+  renderProducts(allProducts);
+
+  
+}
+
+function renderProducts(products) {
+  const list = document.getElementById("product-list");
+  list.innerHTML = "";
+
+  products.forEach(p => {
+    const safeName = p.name.replace(/'/g, "\\'");
+    const card = document.createElement("div");
+    card.classList.add("product-card");
+    card.setAttribute("data-product-id", p.id);
+    card.setAttribute("data-stock-qty", p.stock_qty);
+
+    card.innerHTML = `
+      <div class="product-name">${p.name}</div>
+      <div class="product-price">৳${p.price} <small>(Stock: ${p.stock_qty})</small></div>
+      <button class="add-btn" onclick="addToCart('${p.id}', '${safeName}', ${p.price})">Add</button>
+    `;
+
+    list.appendChild(card);
+  });
+}
+
+// ✅ Filter products
+
+function filterProducts() {
+  const term = document.getElementById("search").value.toLowerCase();
+  const filtered = allProducts.filter(p => p.name.toLowerCase().includes(term));
+  renderProducts(filtered);
+}
+
+
+// ✅ Add to cart with stock check
+function addToCart(id, name, price) {
+  const stockEl = document.querySelector(`[data-product-id='${id}']`);
+  const maxQty = parseInt(stockEl?.dataset.stockQty || "9999");
+
+  const item = cart.find(x => x.product_id === id);
+  if (item) {
+    if (item.quantity + 1 > maxQty) {
+      Swal.fire("⚠ Stock limit", "You cannot add more than available stock.", "warning");
+      return;
+    }
+    item.quantity += 1;
+  } else {
+    cart.push({ product_id: id, name: name, quantity: 1, unit_price: price });
+  }
+  renderCart();
+}
+
+// ✅ Render cart + auto total
+function renderCart() {
+  const c = document.getElementById("cart-items");
+  c.innerHTML = "";
+  let total = 0;
+
+  cart.forEach((it, idx) => {
+    const subtotal = it.quantity * it.unit_price;
+    total += subtotal;
+    c.innerHTML += `
+      <div>${it.name} x ${it.quantity} = ${subtotal.toFixed(2)}
+      <button onclick='remove(${idx})'>-</button></div>`;
+  });
+
+  document.getElementById("total").innerText = total.toFixed(2);
+  updateChange(); // recalc change
+}
+
+// ✅ Remove item
+function remove(idx) {
+  cart.splice(idx, 1);
+  renderCart();
+}
+
+// ✅ Auto update change
+function updateChange() {
+  const total = parseFloat(document.getElementById("total").innerText || "0");
+  const paid = parseFloat(document.getElementById("paid_amount").value || "0");
+  const change = paid > total ? (paid - total).toFixed(2) : "0.00";
+  document.getElementById("change").innerText = change;
+}
+document.getElementById("paid_amount").addEventListener("input", updateChange);
+
+// ✅ Checkout process
+async function checkout() {
+  if (cart.length === 0) {
+    Swal.fire("⚠ Oops!", "Cart is empty! Please add items first.", "warning");
+    return;
+  }
+
+  const total = parseFloat(document.getElementById("total").innerText);
+  const paidAmount = parseFloat(document.getElementById("paid_amount").value || "0");
+  const paymentMethod = document.getElementById('payment_method').value;
+
+  const payload = {
+    items: cart.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
+    order_type: 'takeaway',
+    discount_amount: '0',
+    payment: { method: paymentMethod, paid_amount: paidAmount }
+  };
+
+  try {
+    const res = await fetch("{% url 'canteen:api_create_order' %}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (data.status !== "success") {
+      Swal.fire("⚠ Cannot proceed", data.message || "Stock not available.", "warning");
+      return;
+    }
+
+    Swal.fire({
+  title: "✅ Order Created!",
+  html: `Order ID: <b>${data.order_id}</b><br>
+         <button onclick="window.open('/receipt/${data.order_id}/','_blank')"
+           style='margin-top:10px;background:#2563eb;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;'>
+           🖨️ Print Receipt
+         </button>`,
+  showConfirmButton: true,
+  confirmButtonText: "OK"
+}).then(() => location.reload());
+
+
+  } catch (err) {
+    Swal.fire("❌ Error", "Something went wrong. Please try again.", "error");
+    console.error(err);
+  }
+}
+
+window.addEventListener("load", loadProducts);
+</script>
+</body>
+</html>

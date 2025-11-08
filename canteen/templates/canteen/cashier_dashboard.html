@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cashier Dashboard - Canteen Management</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #1e293b;
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 20px;
+            margin: 0;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .summary {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .summary-box {
+            background-color: #e0f2fe;
+            padding: 20px;
+            border-radius: 10px;
+            width: 30%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .summary-box h2 {
+            margin: 0;
+            color: #1e40af;
+        }
+
+        .summary-box p {
+            margin: 5px 0 0;
+            color: #1e293b;
+        }
+
+        h2 {
+            text-align: center;
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f3f4f6;
+        }
+
+        tr:hover {
+            background-color: #e0f2fe;
+        }
+
+        .btn {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background-color: #1e40af;
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+            color: #555;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Cashier Dashboard</h1>
+    <nav>
+        <a href="{% url 'canteen:pos' %}">POS</a>
+        <a href="{% url 'logout' %}">Logout</a>
+    </nav>
+</header>
+
+<div class="container">
+    <div class="summary">
+        <div class="summary-box">
+            <h2>{{ total_sales }}</h2>
+            <p>Total Sales Today</p>
+        </div>
+        <div class="summary-box">
+            <h2>{{ total_orders }}</h2>
+            <p>Orders Processed</p>
+        </div>
+        <div class="summary-box">
+            <h2>{{ pending_orders }}</h2>
+            <p>Pending Payments</p>
+        </div>
+    </div>
+
+    <h2>Recent Orders</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in recent_orders %}
+            <tr>
+                <td>#{{ order.id }}</td>
+                <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+                <td>{{ order.total_amount }}</td>
+                <td>
+                    {% if order.is_paid %}
+                        <span style="color:green;font-weight:bold;">Paid</span>
+                    {% else %}
+                        <span style="color:red;font-weight:bold;">Unpaid</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align:center;color:#888;">No recent orders found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="text-align:center;">
+        <a href="{% url 'canteen:pos' %}" class="btn">Open POS</a>
+    </div>
+</div>
+
+<footer>
+    © {{ now|date:"Y" }} Canteen Management System. All rights reserved.
+</footer>
+
+</body>
+</html>

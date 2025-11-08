@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Access Denied - Canteen Management</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background-color: #f8fafc;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+
+        .error-box {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            max-width: 400px;
+        }
+
+        h1 {
+            font-size: 48px;
+            color: #ef4444;
+            margin: 0;
+        }
+
+        h2 {
+            font-size: 22px;
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+
+        p {
+            color: #64748b;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 15px;
+            text-decoration: none;
+            background: #2563eb;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 6px;
+        }
+
+        a:hover {
+            background: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-box">
+        <h1>403</h1>
+        <h2>Access Denied</h2>
+        <p>You don’t have permission to view this page.</p>
+        <a href="{% url 'canteen:index' %}">Return Home</a>
+    </div>
+</body>
+</html>

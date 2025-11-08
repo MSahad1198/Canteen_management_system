@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Receipt #{{ order.id }}</title>
+  <style>
+    body {
+      font-family: "Courier New", monospace;
+      width: 80mm;
+      margin: auto;
+      background: white;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 5px;
+    }
+    .divider {
+      border-top: 1px dashed #000;
+      margin: 8px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    td {
+      padding: 2px 0;
+    }
+    .total {
+      font-weight: bold;
+    }
+    .center {
+      text-align: center;
+    }
+    @media print {
+      button {
+        display: none;
+      }
+      body {
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>🍔 {{ site_name|default:"Canteen POS" }}</h2>
+  <div class="center">Order #{{ order.id }}</div>
+  <div class="divider"></div>
+
+  <table>
+    {% for item in order.items.all %}
+    <tr>
+      <td>{{ item.product.name }}</td>
+      <td class="center">x{{ item.quantity }}</td>
+      <td style="text-align:right;">{{ item.subtotal }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <div class="divider"></div>
+  <table>
+    <tr><td>Subtotal:</td><td style="text-align:right;">{{ order.total_amount }}</td></tr>
+    <tr><td>Paid:</td><td style="text-align:right;">{{ order.payment.paid_amount }}</td></tr>
+    <tr class="total"><td>Change:</td><td style="text-align:right;">{{ order.payment.change_amount }}</td></tr>
+  </table>
+
+  <div class="divider"></div>
+  <div class="center">
+    Payment: {{ order.payment.method|title }}<br>
+    {{ order.created_at|date:"Y-m-d H:i" }}
+  </div>
+
+  <div class="divider"></div>
+  <div class="center">Thank you for your order! 🍽️</div>
+
+  <button onclick="window.print()">🖨️ Print</button>
+</body>
+</html>

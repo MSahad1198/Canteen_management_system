@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Canteen Management{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+</head>
+<body class="bg-gray-100">
+  <header class="bg-blue-700 text-white py-4 mb-6 shadow">
+    <div class="container mx-auto flex justify-between items-center px-6">
+      <h1 class="text-xl font-semibold">Canteen Management</h1>
+      <nav>
+        <a href="{% url 'canteen:index' %}" class="px-3">Home</a>
+        <a href="{% url 'canteen:pos' %}" class="px-3">POS</a>
+        <a href="{% url 'canteen:view_orders' %}" class="px-3">Orders</a>
+        <a href="{% url 'canteen:cashier_dashboard' %}" class="px-3">Dashboard</a>
+        <a href="/admin/" class="px-3">Admin</a>
+        <a href="{% url 'logout' %}" class="px-3">Logout</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-6">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="text-center py-6 text-gray-600 mt-10">
+    © {{ now|date:"Y" }} Canteen Management System.
+  </footer>
+</body>
+</html>

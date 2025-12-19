@@ -30,11 +30,47 @@
 }
 
 #product-list {
-  max-height: 80vh;           /* adjust as you like */
-  overflow-y: auto;
-  border-top: 1px solid #ddd;
-  padding-top: 10px;
-}
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+        max-height: 70vh;
+        overflow-y: auto;
+        padding-top: 10px;
+    }
+    
+    .product-card {
+        background: #f1f5f9;
+        border-radius: 10px;
+        padding: 10px;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease, background 0.2s ease;
+        cursor: pointer;
+        position: relative;
+    }
+    
+    .product-card:hover {
+        background: #e2e8f0;
+        transform: scale(1.05);
+    }
+    
+    /* Item ID Badge */
+    .item-id-badge {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: #2563eb;
+        color: white;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 16px;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+    }
 
 
     #products {
@@ -133,6 +169,18 @@
 <body>
 <h1>🍔 Point of Sale</h1>
 
+
+<button onclick="startVoice()">🎤 Voice Add</button>
+
+
+<!-- ensure csrf cookie is set by rendering the token into the page -->
+<form id="csrf-form" style="display:none;">
+  {% csrf_token %}
+</form>
+
+
+
+
 <div class="container">
   <div id="products">
    <h2>Available Items</h2>
@@ -164,52 +212,151 @@
 <script>
 let cart = [];
 let allProducts = []; // store all products globally
+let recognition;
 
+// Start voice recognition (button calls startVoice())
+function startVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert("Speech recognition not supported in this browser");
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.lang = "en-US";   // change to "bn-BD" for Bangla
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onresult = (event) => {
+    const spokenText = event.results[0][0].transcript.toLowerCase();
+    console.log("Heard:", spokenText);
+    processVoiceCommand(spokenText);
+  };
+
+  recognition.onerror = (event) => {
+    console.error("Voice error:", event.error);
+    alert("Voice error: " + event.error);
+  };
+
+  recognition.start();
+}
+
+// ====================== new helper: extract numbers from spoken text ======================
+function extractNumbersFromText(text) {
+  const results = [];
+  // 1) direct digits like "1", "12", "add1"
+  const digitMatches = text.match(/\d+/g);
+  if (digitMatches) results.push(...digitMatches.map(d => String(d)));
+
+  // 2) number words (one, two, three, ... twenty)
+  const words = {
+    zero:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9,
+    ten:10, eleven:11, twelve:12, thirteen:13, fourteen:14, fifteen:15, sixteen:16,
+    seventeen:17, eighteen:18, nineteen:19, twenty:20
+  };
+  const wordRegex = new RegExp('\\b(' + Object.keys(words).join('|') + ')\\b','gi');
+  let m;
+  while ((m = wordRegex.exec(text)) !== null) {
+    results.push(String(words[m[1].toLowerCase()]));
+  }
+
+  return results;
+}
+
+// ====================== replaced: processVoiceCommand ======================
+function processVoiceCommand(text) {
+  // Normalize text
+  const normalized = String(text || '').toLowerCase().replace(/[,.-]/g, ' ');
+  const numbers = extractNumbersFromText(normalized);
+
+  if (!numbers || numbers.length === 0) {
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'warning',
+      title: 'No item number detected',
+      showConfirmButton: false,
+      timer: 1400
+    });
+    return;
+  }
+
+  numbers.forEach(num => addItemByVoice(num));
+}
+
+/* ===============================
+   ➕ ADD ITEM BY VOICE
+================================ */
+function addItemByVoice(spokenId) {
+  // loose compare because p.id may be number or string like "combo-1"
+  const product = allProducts.find(p => String(p.id) === String(spokenId));
+  if (!product) {
+    alert(`Item ${spokenId} not found`);
+    return;
+  }
+  // reuse existing addToCart to keep cart shape consistent
+  addToCart(String(product.id), product.name.replace(/'/g, "\\'"), parseFloat(product.price));
+}
+
+// helper to read cookie (used to send X-CSRFToken)
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
 
 // ✅ Load available products
 async function loadProducts() {
-  const res = await fetch("{% url 'canteen:api_products' %}");
+  const res = await fetch("{% url 'canteen:api_products' %}", { credentials: 'same-origin' });
   const data = await res.json();
   allProducts = data.products; // store all
   renderProducts(allProducts);
-
-  
 }
 
 function renderProducts(products) {
-  const list = document.getElementById("product-list");
-  list.innerHTML = "";
+    const list = document.getElementById('product-list');
+    list.innerHTML = '';
 
-  products.forEach(p => {
-    const safeName = p.name.replace(/'/g, "\\'");
-    const card = document.createElement("div");
-    card.classList.add("product-card");
-    card.setAttribute("data-product-id", p.id);
-    card.setAttribute("data-stock-qty", p.stock_qty);
+    products.forEach((p) => {
+        const safeName = String(p.name).replace(/'/g, "\\'").replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const card = document.createElement('div');
+        card.classList.add('product-card');
+        // set proper data-* attributes
+        card.setAttribute('data-product-id', String(p.id));
+        card.setAttribute('data-stock-qty', String(p.stock_qty ?? p.stockQty ?? ''));
 
-    card.innerHTML = `
-      <div class="product-name">${p.name}</div>
-      <div class="product-price">৳${p.price} <small>(Stock: ${p.stock_qty})</small></div>
-      <button class="add-btn" onclick="addToCart('${p.id}', '${safeName}', ${p.price})">Add</button>
-    `;
-
-    list.appendChild(card);
-  });
+        card.innerHTML = `
+  <div class="item-id-badge">${String(p.id)}</div>
+  <div class="product-name">#${String(p.id)} ${safeName}</div>
+  <div class="product-price">৳${String(p.price)} <small>(Stock: ${String(p.stock_qty ?? p.stockQty ?? '—')})</small></div>
+  <button class="add-btn" onclick="addToCart('${String(p.id)}', '${safeName}', ${parseFloat(p.price) || 0})">
+    Add
+  </button>
+`;
+        list.appendChild(card);
+    });
 }
 
 // ✅ Filter products
-
 function filterProducts() {
   const term = document.getElementById("search").value.toLowerCase();
-  const filtered = allProducts.filter(p => p.name.toLowerCase().includes(term));
+  const filtered = allProducts.filter(p => String(p.name).toLowerCase().includes(term));
   renderProducts(filtered);
 }
-
 
 // ✅ Add to cart with stock check
 function addToCart(id, name, price) {
   const stockEl = document.querySelector(`[data-product-id='${id}']`);
-  const maxQty = parseInt(stockEl?.dataset.stockQty || "9999");
+  const maxQty = parseInt(stockEl?.dataset.stockQty || stockEl?.getAttribute('data-stock-qty') || "9999");
 
   const item = cart.find(x => x.product_id === id);
   if (item) {
@@ -278,7 +425,12 @@ async function checkout() {
   try {
     const res = await fetch("{% url 'canteen:api_create_order' %}", {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+        'X-Requested-With': 'XMLHttpRequest'
+      },
       body: JSON.stringify(payload)
     });
 
@@ -290,16 +442,15 @@ async function checkout() {
     }
 
     Swal.fire({
-  title: "✅ Order Created!",
-  html: `Order ID: <b>${data.order_id}</b><br>
-         <button onclick="window.open('/receipt/${data.order_id}/','_blank')"
-           style='margin-top:10px;background:#2563eb;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;'>
-           🖨️ Print Receipt
-         </button>`,
-  showConfirmButton: true,
-  confirmButtonText: "OK"
-}).then(() => location.reload());
-
+      title: "✅ Order Created!",
+      html: `Order ID: <b>${data.order_id}</b><br>
+             <button onclick="window.open('/receipt/${data.order_id}/','_blank')"
+               style='margin-top:10px;background:#2563eb;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;'>
+               🖨️ Print Receipt
+             </button>`,
+      showConfirmButton: true,
+      confirmButtonText: "OK"
+    }).then(() => location.reload());
 
   } catch (err) {
     Swal.fire("❌ Error", "Something went wrong. Please try again.", "error");

@@ -28,7 +28,8 @@ urlpatterns = [
     path('report/pdf/', views.export_report_pdf, name='report_pdf'),
     path('report/excel/', views.export_report_excel, name='report_excel'),
 
-    
+    path('order/cancel/<int:order_id>/', views.cancel_order, name='cancel_order'),
+
 
 
 ]

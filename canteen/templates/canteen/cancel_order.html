@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cancel Order</title>
+<style>
+ body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f1f5f9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+ }
+ .box {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  width: 420px;
+ }
+ h2 {
+  margin-top: 0;
+  color: #dc2626;
+  text-align: center;
+ }
+ textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  resize: none;
+ }
+ button {
+  width: 100%;
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 12px;
+  margin-top: 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+ }
+ button:hover {
+  background: #b91c1c;
+ }
+ a {
+  display: block;
+  text-align: center;
+  margin-top: 10px;
+  text-decoration: none;
+  color: #2563eb;
+ }
+</style>
+</head>
+<body>
+
+<div class="box">
+ <h2>Cancel Order #{{ order.id }}</h2>
+
+ <form method="post">
+  {% csrf_token %}
+  <label><b>Reason for cancellation:</b></label>
+  <textarea name="cancel_reason" rows="4"
+   placeholder="Enter reason (e.g. Customer cancelled, Item unavailable)"
+   required></textarea>
+
+  <button type="submit">❌ Cancel Order</button>
+ </form>
+
+ <a href="{% url 'canteen:view_orders' %}">⬅ Back to Orders</a>
+</div>
+
+</body>
+</html>

@@ -518,3 +518,28 @@ def export_report_excel(request):
         response.write(buffer.getvalue())
 
     return response
+
+@login_required
+def cancel_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+
+    # Only admin or the cashier who created the order can cancel
+    if not (request.user.is_staff or order.cashier == request.user):
+        return render(request, 'canteen/403.html')
+
+    if request.method == "POST":
+        reason = request.POST.get('cancel_reason')
+
+        if not reason:
+            messages.error(request, "Cancellation reason is required.")
+            return redirect('canteen:cancel_order', order_id=order.id)
+
+        order.cancelled = True
+        order.cancel_reason = reason
+        order.is_paid = False
+        order.save()
+
+        messages.success(request, f"Order #{order.id} cancelled successfully.")
+        return redirect('canteen:view_orders')
+
+    return render(request, 'canteen/cancel_order.html', {'order': order})

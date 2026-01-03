@@ -151,11 +151,31 @@
                         <span class="status-paid">Paid</span>
                     {% else %}
                         <span class="status-unpaid">Unpaid</span>
+                        {% if order.cancelled %}
+ <div style="color:#b91c1c;font-size:13px;">
+  Reason: {{ order.cancel_reason }}
+ </div>
+{% endif %}
+
                     {% endif %}
                 </td>
                 <td>
-                    <a class="btn" href="{% url 'canteen:api_reprint' order.id %}">View</a>
-                </td>
+  <!-- View Receipt -->
+  <a class="btn" href="{% url 'canteen:api_reprint' order.id %}">
+    View
+  </a>
+
+  <!-- Cancel Order Button -->
+  {% if not order.cancelled %}
+    <a class="btn" style="background:#dc2626;"
+       href="{% url 'canteen:cancel_order' order.id %}">
+       Cancel
+    </a>
+  {% else %}
+    <span style="color:red;font-weight:bold;">Cancelled</span>
+  {% endif %}
+</td>
+
             </tr>
             {% empty %}
             <tr>

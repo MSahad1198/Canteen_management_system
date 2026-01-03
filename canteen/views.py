@@ -23,6 +23,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from openpyxl import Workbook
 from io import BytesIO
+from django.db.models.functions import ExtractYear
 
 
 
@@ -361,6 +362,7 @@ def report(request):
     today = timezone.now().date()
     week_start = today - timedelta(days=today.weekday())  # Monday
     month_start = today.replace(day=1)
+    year_start = today.replace(month=1, day=1)
 
     # Daily totals
     daily_sales = (
@@ -380,31 +382,29 @@ def report(request):
         .aggregate(total=Sum('total_amount'), count=Count('id'))
     )
 
-    # Best-selling items (top 5)
+    # ✅ Yearly totals (NEW)
+    yearly_sales = (
+        Order.objects.filter(created_at__date__gte=year_start)
+        .aggregate(total=Sum('total_amount'), count=Count('id'))
+    )
+
+    # Best-selling items
     top_items = (
         OrderItem.objects.values('product__name')
         .annotate(total_qty=Sum('quantity'))
         .order_by('-total_qty')[:5]
     )
 
-    # Prepare data for Chart.js
-    last_7_days = [today - timedelta(days=i) for i in range(6, -1, -1)]
-    daily_chart_labels = [d.strftime("%b %d") for d in last_7_days]
-    daily_chart_values = [
-        Order.objects.filter(created_at__date=d).aggregate(total=Sum('total_amount'))['total'] or 0
-        for d in last_7_days
-    ]
-
     context = {
-        "today": today,
         "daily_sales": daily_sales,
         "weekly_sales": weekly_sales,
         "monthly_sales": monthly_sales,
+        "yearly_sales": yearly_sales,  # ✅ pass to template
         "top_items": top_items,
-        "chart_labels": daily_chart_labels,
-        "chart_values": daily_chart_values,
     }
+
     return render(request, "canteen/report.html", context)
+
 
 @login_required
 def export_report_pdf(request):

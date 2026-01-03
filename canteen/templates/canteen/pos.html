@@ -171,6 +171,8 @@
 
 
 <button onclick="startVoice()">🎤 Voice Add</button>
+<button onclick="stopVoice()" style="background:#dc2626;">🛑 Stop</button>
+
 
 
 <!-- ensure csrf cookie is set by rendering the token into the page -->
@@ -195,6 +197,19 @@
 
     <div class="summary">
       <p><b>Total:</b> <span id="total">0.00</span></p>
+      <p>
+  <b>Discount (৳):</b>
+  <input 
+    id="discount_amount" 
+    type="number" 
+    min="0" 
+    value="0"
+    placeholder="Enter discount amount"
+    style="width:100%;padding:6px;margin-top:4px;"
+    oninput="updateChange()"
+  />
+</p>
+
       <p><b>Paid Amount:</b> <input id="paid_amount" placeholder="Enter paid amount" /></p>
       <p><b>Change:</b> <span id="change">0.00</span></p>
       <p><b>Payment Method:</b>
@@ -213,33 +228,89 @@
 let cart = [];
 let allProducts = []; // store all products globally
 let recognition;
+let isListening = false; // ✅ Initialize voice listening state
 
 // Start voice recognition (button calls startVoice())
 function startVoice() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
   if (!SpeechRecognition) {
     alert("Speech recognition not supported in this browser");
     return;
   }
 
+  // Prevent starting twice
+  if (isListening) return;
+
   recognition = new SpeechRecognition();
-  recognition.lang = "en-US";   // change to "bn-BD" for Bangla
-  recognition.continuous = false;
+  recognition.lang = "en-US";
+  recognition.continuous = true;      // ✅ keep listening
   recognition.interimResults = false;
 
   recognition.onresult = (event) => {
-    const spokenText = event.results[0][0].transcript.toLowerCase();
+    // get LAST result only
+    const lastIndex = event.results.length - 1;
+    const spokenText = event.results[lastIndex][0].transcript.toLowerCase();
     console.log("Heard:", spokenText);
     processVoiceCommand(spokenText);
   };
 
   recognition.onerror = (event) => {
     console.error("Voice error:", event.error);
-    alert("Voice error: " + event.error);
+  };
+
+  recognition.onend = () => {
+    // Auto-restart if user didn't press Stop
+    if (isListening) {
+      recognition.start();
+    }
   };
 
   recognition.start();
+  isListening = true;
+
+  Swal.fire({
+    toast: true,
+    position: 'top-end',
+    icon: 'info',
+    title: '🎤 Voice listening started',
+    showConfirmButton: false,
+    timer: 1500
+  });
 }
+
+
+function stopVoice() {
+  if (recognition && isListening) {
+    isListening = false;
+    recognition.stop();
+    recognition = null;
+
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: '🛑 Voice listening stopped',
+      showConfirmButton: false,
+      timer: 1500
+    });
+  }
+}
+
+function isCheckoutCommand(text) {
+  const checkoutWords = [
+    "checkout",
+    "check out",
+    "place order",
+    "finish order",
+    "complete order"
+  ];
+
+  return checkoutWords.some(cmd => text.includes(cmd));
+}
+
+
 
 // ====================== new helper: extract numbers from spoken text ======================
 function extractNumbersFromText(text) {
@@ -265,8 +336,27 @@ function extractNumbersFromText(text) {
 
 // ====================== replaced: processVoiceCommand ======================
 function processVoiceCommand(text) {
-  // Normalize text
-  const normalized = String(text || '').toLowerCase().replace(/[,.-]/g, ' ');
+  const normalized = String(text || '')
+    .toLowerCase()
+    .replace(/[,.-]/g, ' ')
+    .trim();
+
+  // 🔊 VOICE CHECKOUT
+  if (isCheckoutCommand(normalized)) {
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: '🧾 Checkout started',
+      showConfirmButton: false,
+      timer: 1500
+    });
+
+    checkout();   // ✅ CALL EXISTING CHECKOUT
+    return;
+  }
+
+  // 🔢 VOICE ADD ITEMS
   const numbers = extractNumbersFromText(normalized);
 
   if (!numbers || numbers.length === 0) {
@@ -283,6 +373,7 @@ function processVoiceCommand(text) {
 
   numbers.forEach(num => addItemByVoice(num));
 }
+
 
 /* ===============================
    ➕ ADD ITEM BY VOICE
@@ -385,7 +476,13 @@ function renderCart() {
       <button onclick='remove(${idx})'>-</button></div>`;
   });
 
-  document.getElementById("total").innerText = total.toFixed(2);
+  const discount = parseFloat(
+  document.getElementById("discount_amount")?.value || "0"
+);
+
+const finalTotal = Math.max(total - discount, 0);
+document.getElementById("total").innerText = finalTotal.toFixed(2);
+
   updateChange(); // recalc change
 }
 
@@ -415,12 +512,18 @@ async function checkout() {
   const paidAmount = parseFloat(document.getElementById("paid_amount").value || "0");
   const paymentMethod = document.getElementById('payment_method').value;
 
-  const payload = {
-    items: cart.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
-    order_type: 'takeaway',
-    discount_amount: '0',
-    payment: { method: paymentMethod, paid_amount: paidAmount }
-  };
+  const discountValue = document.getElementById("discount_amount").value || "0";
+
+const payload = {
+  items: cart.map(i => ({
+    product_id: i.product_id,
+    quantity: i.quantity
+  })),
+  order_type: 'takeaway',
+  discount_amount: discountValue,  // ✅ send discount
+  payment: { method: paymentMethod, paid_amount: paidAmount }
+};
+
 
   try {
     const res = await fetch("{% url 'canteen:api_create_order' %}", {

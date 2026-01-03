@@ -59,6 +59,11 @@
 
   <div class="divider"></div>
   <table>
+    <tr>
+  <td>Discount:</td>
+  <td style="text-align:right;">-{{ order.discount_amount }}</td>
+</tr>
+
     <tr><td>Subtotal:</td><td style="text-align:right;">{{ order.total_amount }}</td></tr>
     <tr><td>Paid:</td><td style="text-align:right;">{{ order.payment.paid_amount }}</td></tr>
     <tr class="total"><td>Change:</td><td style="text-align:right;">{{ order.payment.change_amount }}</td></tr>

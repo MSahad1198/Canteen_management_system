@@ -118,6 +118,12 @@
       <p>This Month</p>
       <small>{{ monthly_sales.count|default:0 }} Orders</small>
     </div>
+    <div class="card">
+    <h2>৳{{ yearly_sales.total|default:0 }}</h2>
+    <p>This Year</p>
+    <small>{{ yearly_sales.count|default:0 }} Orders</small>
+</div>
+
   </div>
 
   <div class="chart-container">

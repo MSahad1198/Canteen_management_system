@@ -1,0 +1,68 @@
+{% extends 'canteen/base.html' %}
+
+{% block title %}Today's Sales{% endblock %}
+
+{% block content %}
+<div class="bg-white shadow rounded-lg p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Sales Report: {{ today|date:"F j, Y" }}</h2>
+        <a href="{% url 'canteen:report' %}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Back to Reports</a>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <h3 class="text-lg font-semibold text-blue-800">Total Revenue</h3>
+            <p class="text-3xl font-bold text-blue-900">${{ total_sales }}</p>
+        </div>
+        <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+            <h3 class="text-lg font-semibold text-green-800">Total Orders</h3>
+            <p class="text-3xl font-bold text-green-900">{{ order_count }}</p>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white border border-gray-200">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="py-3 px-4 border-b text-left text-gray-600">Order ID</th>
+                    <th class="py-3 px-4 border-b text-left text-gray-600">Time</th>
+                    <th class="py-3 px-4 border-b text-left text-gray-600">Cashier</th>
+                    <th class="py-3 px-4 border-b text-left text-gray-600">Items</th>
+                    <th class="py-3 px-4 border-b text-right text-gray-600">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4 border-b font-mono">#{{ order.id }}</td>
+                    <td class="py-3 px-4 border-b">{{ order.created_at|date:"H:i A" }}</td>
+                    <td class="py-3 px-4 border-b">
+                        {% if order.cashier %}
+                            {{ order.cashier.username }}
+                        {% else %}
+                            <span class="text-gray-400">System</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3 px-4 border-b text-sm text-gray-600">
+                        {% for item in order.items.all %}
+                            {{ item.quantity }}x {{ item.product.name }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td class="py-3 px-4 border-b text-right font-bold text-gray-800">
+                        ${{ order.total_amount }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="py-8 text-center text-gray-500">
+                        No sales recorded today yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

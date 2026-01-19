@@ -72,7 +72,9 @@
   <div class="divider"></div>
   <div class="center">
     Payment: {{ order.payment.method|title }}<br>
-    {{ order.created_at|date:"Y-m-d H:i" }}
+    {{ order.created_at|date:"Y-m-d H:i" }}<br>
+    Cashier: {{ order.cashier.username|default:"-" }}<br>
+    Order Type: {{ order.get_order_type_display }}
   </div>
 
   <div class="divider"></div>

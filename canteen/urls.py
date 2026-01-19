@@ -25,12 +25,32 @@ urlpatterns = [
 
     path('report/', views.report, name='report'),
 
+    #detasiled reports urls
+    path('report/today-sales/', views.today_sales_detail, name='today_sales_detail'),
+    path('report/weekly-sales/', views.weekly_sales_detail, name='weekly_sales_detail'),
+    path('report/monthly-sales/', views.monthly_sales_detail, name='monthly_sales_detail'),
+    path('report/yearly-sales/', views.yearly_sales_detail, name='yearly_sales_detail'),
+
     path('report/pdf/', views.export_report_pdf, name='report_pdf'),
     path('report/excel/', views.export_report_excel, name='report_excel'),
 
     path('order/cancel/<int:order_id>/', views.cancel_order, name='cancel_order'),
 
-
+     # ✅ TODAY'S SALES EXPORTS
+    path('report/today-sales/pdf/', views.export_today_sales_pdf, name='export_today_pdf'),
+    path('report/today-sales/excel/', views.export_today_sales_excel, name='export_today_excel'),
+    
+    # ✅ WEEKLY SALES EXPORTS
+    path('report/weekly-sales/pdf/', views.export_weekly_sales_pdf, name='export_weekly_pdf'),
+    path('report/weekly-sales/excel/', views.export_weekly_sales_excel, name='export_weekly_excel'),
+    
+    # ✅ MONTHLY SALES EXPORTS
+    path('report/monthly-sales/pdf/', views.export_monthly_sales_pdf, name='export_monthly_pdf'),
+    path('report/monthly-sales/excel/', views.export_monthly_sales_excel, name='export_monthly_excel'),
+    
+    # ✅ YEARLY SALES EXPORTS
+    path('report/yearly-sales/pdf/', views.export_yearly_sales_pdf, name='export_yearly_pdf'),
+    path('report/yearly-sales/excel/', views.export_yearly_sales_excel, name='export_yearly_excel'),
 
 ]
 

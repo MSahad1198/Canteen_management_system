@@ -161,9 +161,14 @@
                 </td>
                 <td>
   <!-- View Receipt -->
-  <a class="btn" href="{% url 'canteen:api_reprint' order.id %}">
+  <a class="btn" href="{% url 'canteen:reprint_receipt' order.id %}" target="_blank">
     View
   </a>
+
+  <!-- Reprint Receipt Button -->
+  <button class="btn" onclick="window.open('{% url 'canteen:reprint_receipt' order.id %}', '_blank')">
+    Reprint
+  </button>
 
   <!-- Cancel Order Button -->
   {% if not order.cancelled %}

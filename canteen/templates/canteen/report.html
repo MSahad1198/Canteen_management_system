@@ -84,43 +84,109 @@
     .back-btn:hover {
       background: #1e40af;
     }
+
+    .export-section {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+    .export-group {
+      margin-bottom: 20px;
+    }
+    .export-group h4 {
+      margin: 0 0 10px 0;
+      color: #1e40af;
+      font-size: 1.2rem;
+    }
+    .export-btn {
+      display: inline-block;
+      background: #2563eb;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 8px;
+      text-decoration: none;
+      margin: 0 5px;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    .export-btn:hover {
+      background: #1e40af;
+    }
+    .export-btn.pdf {
+      background: #dc2626;
+    }
+    .export-btn.pdf:hover {
+      background: #b91c1c;
+    }
+    .export-btn.excel {
+      background: #16a34a;
+    }
+    .export-btn.excel:hover {
+      background: #15803d;
+    }
   </style>
 </head>
 <body>
   <a href="{% url 'canteen:index' %}" class="back-btn">← Back to Dashboard</a>
-  <h1><div style="text-align:center;margin-bottom:20px;">
-  <a href="{% url 'canteen:report_pdf' %}" 
-     style="background:#2563eb;color:white;padding:10px 15px;border-radius:8px;text-decoration:none;margin-right:10px;">
-     🧾 Download PDF
-  </a>
+  <h1>📊 Sales Reports</h1>
 
-  <a href="{% url 'canteen:report_excel' %}" 
-     style="background:#16a34a;color:white;padding:10px 15px;border-radius:8px;text-decoration:none;">
-     📊 Download Excel
-  </a>
-</div>
-
-    📊 Sales Reports</h1>
+  <!-- New: Export Options Section -->
+  <div class="export-section">
+    <h2>📤 Export Reports</h2>
+    <div class="export-group">
+      <h4>Today's Sales</h4>
+      <a href="{% url 'canteen:export_today_pdf' %}" class="export-btn pdf">📄 PDF</a>
+      <a href="{% url 'canteen:export_today_excel' %}" class="export-btn excel">📊 Excel</a>
+    </div>
+    <div class="export-group">
+      <h4>Weekly Sales</h4>
+      <a href="{% url 'canteen:export_weekly_pdf' %}" class="export-btn pdf">📄 PDF</a>
+      <a href="{% url 'canteen:export_weekly_excel' %}" class="export-btn excel">📊 Excel</a>
+    </div>
+    <div class="export-group">
+      <h4>Monthly Sales</h4>
+      <a href="{% url 'canteen:export_monthly_pdf' %}" class="export-btn pdf">📄 PDF</a>
+      <a href="{% url 'canteen:export_monthly_excel' %}" class="export-btn excel">📊 Excel</a>
+    </div>
+    <div class="export-group">
+      <h4>Yearly Sales</h4>
+      <a href="{% url 'canteen:export_yearly_pdf' %}" class="export-btn pdf">📄 PDF</a>
+      <a href="{% url 'canteen:export_yearly_excel' %}" class="export-btn excel">📊 Excel</a>
+    </div>
+  </div>
 
   <div class="summary">
     <div class="card">
       <h2>৳{{ daily_sales.total|default:0 }}</h2>
-      <p>Today's Sales</p>
+      <!-- Inside canteen/report.html -->
+<a href="{% url 'canteen:today_sales_detail' %}" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 inline-block">
+    View Today's Sales
+</a>
+
       <small>{{ daily_sales.count|default:0 }} Orders</small>
     </div>
     <div class="card">
       <h2>৳{{ weekly_sales.total|default:0 }}</h2>
-      <p>This Week</p>
+      <a href="{% url 'canteen:weekly_sales_detail' %}" class="bg-purple-600 text-white px-6 py-3 rounded-lg shadow hover:bg-purple-700">
+        Weekly Sales Report
+    </a>
       <small>{{ weekly_sales.count|default:0 }} Orders</small>
     </div>
     <div class="card">
       <h2>৳{{ monthly_sales.total|default:0 }}</h2>
-      <p>This Month</p>
+      <a href="{% url 'canteen:monthly_sales_detail' %}" class="bg-teal-600 text-white px-4 py-4 rounded-lg shadow hover:bg-teal-700 text-center font-bold">
+        📅 Monthly Calendar
+    </a>
       <small>{{ monthly_sales.count|default:0 }} Orders</small>
     </div>
     <div class="card">
     <h2>৳{{ yearly_sales.total|default:0 }}</h2>
-    <p>This Year</p>
+    <a href="{% url 'canteen:yearly_sales_detail' %}" class="bg-indigo-600 text-white px-6 py-4 rounded-lg shadow hover:bg-indigo-700 text-center font-semibold text-lg transition transform hover:-translate-y-1">
+        📈 Yearly Overview
+    </a>
     <small>{{ yearly_sales.count|default:0 }} Orders</small>
 </div>
 

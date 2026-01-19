@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Manage Menu Tags</title>
+</head>
+<body>
+    <h1>Assign Tags to Menu Items</h1>
+    <form id="tagForm">
+        <label for="itemSelect">Select Item:</label>
+        <select id="itemSelect">
+            <!-- Options populated by JS -->
+        </select>
+        <label for="tagInput">Tag:</label>
+        <input type="text" id="tagInput" placeholder="e.g., spicy, vegan">
+        <button type="button" onclick="addTag()">Add Tag</button>
+        <button type="button" onclick="removeTag()">Remove Tag</button>
+    </form>
+    <div id="menuDisplay"></div>
+    <script src="adminUI.js"></script>
+</body>
+</html>

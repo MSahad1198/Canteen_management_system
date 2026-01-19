@@ -11,8 +11,8 @@ urlpatterns = [
     path('api/create-order/', views.api_create_order, name='api_create_order'),
     path('api/reprint/<int:order_id>/', views.api_reprint_receipt, name='api_reprint'),
     path('reports/daily/', views.daily_sales_report, name='daily_sales'),
-    path('login/', views.login, name='login'),
-    path('logout/', views.logout_view, name='logout'),
+    #path('login/', views.login, name='login'),
+   path('logout/', views.logout_view, name='logout'),
     path('orders/', views.view_orders, name='view_orders'),
     path('cashier/dashboard/', views.cashier_dashboard, name='cashier_dashboard'),
 

@@ -171,12 +171,32 @@ def api_create_order(request):
             order.is_paid = True
             order.save()  # stock updates trigger from signals
 
+            # ===============================
+# 🔔 Stock Alert Detection
+# ===============================
+            low_stock_products = []
+            out_of_stock_products = []
+
+            for item in order.items.all():
+                product = item.product
+
+            if product.stock_qty == 0:
+                out_of_stock_products.append(product.name)
+
+            elif product.stock_qty <= 5:
+                low_stock_products.append({
+                    "name": product.name,
+                    "remaining": product.stock_qty
+                })
+
         return JsonResponse({
-            'status': 'success',
-            'order_id': order.id,
-            'total': str(order.total_amount),
-            'is_paid': order.is_paid
-        })
+             "status": "success",
+              "order_id": order.id,
+          # 🔔 alerts
+                "low_stock": low_stock_products,
+                "out_of_stock": out_of_stock_products
+})
+
 
     except Exception as e:
         print("⚠️ Error creating order:", e)

@@ -409,6 +409,8 @@ function getCookie(name) {
 async function loadProducts() {
   const res = await fetch("{% url 'canteen:api_products' %}", { credentials: 'same-origin' });
   const data = await res.json();
+  console.log("ORDER RESPONSE:", data);
+
   allProducts = data.products; // store all
   renderProducts(allProducts);
 }
@@ -538,22 +540,61 @@ const payload = {
     });
 
     const data = await res.json();
+    console.log("ORDER API RESPONSE 👉", data);
+
 
     if (data.status !== "success") {
       Swal.fire("⚠ Cannot proceed", data.message || "Stock not available.", "warning");
       return;
     }
 
-    Swal.fire({
-      title: "✅ Order Created!",
-      html: `Order ID: <b>${data.order_id}</b><br>
-             <button onclick="window.open('/receipt/${data.order_id}/','_blank')"
-               style='margin-top:10px;background:#2563eb;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;'>
-               🖨️ Print Receipt
-             </button>`,
-      showConfirmButton: true,
+   Swal.fire({
+  title: "✅ Order Created!",
+  html: `Order ID: <b>${data.order_id}</b><br>
+         <button onclick="window.open('/receipt/${data.order_id}/','_blank')"
+           style='margin-top:10px;background:#2563eb;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;'>
+           🖨️ Print Receipt
+         </button>`,
+  showConfirmButton: true,
+  confirmButtonText: "OK"
+}).then(async () => {
+
+  const lowStock = Array.isArray(data.low_stock) ? data.low_stock : [];
+  const outStock = Array.isArray(data.out_of_stock) ? data.out_of_stock : [];
+
+  if (lowStock.length > 0 || outStock.length > 0) {
+
+    let html = "";
+
+    if (outStock.length > 0) {
+      html += "<b style='color:red'>❌ Out of Stock</b><br>";
+      outStock.forEach(p => {
+        html += `• ${p}<br>`;
+      });
+      html += "<br>";
+    }
+
+    if (lowStock.length > 0) {
+      html += "<b style='color:orange'>⚠ Low Stock</b><br>";
+      lowStock.forEach(p => {
+        html += `• ${p.name} (Remaining: ${p.remaining})<br>`;
+      });
+    }
+
+    // 🔔 WAIT until user closes stock alert
+    await Swal.fire({
+      title: "Stock Alert 🚨",
+      html: html,
+      icon: "warning",
       confirmButtonText: "OK"
-    }).then(() => location.reload());
+    });
+  }
+
+  // 🔄 Reload ONLY after alerts are done
+  location.reload();
+});
+
+
 
   } catch (err) {
     Swal.fire("❌ Error", "Something went wrong. Please try again.", "error");

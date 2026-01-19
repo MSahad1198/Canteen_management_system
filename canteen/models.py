@@ -30,6 +30,8 @@ class Product(models.Model):
     stock_qty = models.IntegerField(default=0)  # inventory count
     tags = models.CharField(max_length=200, blank=True)  # optional tags
 
+    LOW_STOCK_LIMIT = 5  # threshold for low stock alert
+
     def __str__(self):
         return self.name
 

@@ -257,15 +257,19 @@
 
 <!-- Payment Method Selection -->
 <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-    <label class="block text-sm font-bold text-gray-700 mb-2">💳 Payment Method:</label>
+    <label class="block text-sm font-bold text-gray-700 mb-2"> Payment Method:</label>
     <div class="flex gap-4">
         <label class="flex items-center space-x-2 cursor-pointer bg-white px-3 py-2 rounded border hover:bg-green-50 transition">
             <input type="radio" name="payment_method" value="cash" checked class="form-radio text-green-600 h-4 w-4">
-            <span class="text-gray-800 font-medium">💵 Cash</span>
+            <span class="text-gray-800 font-medium"> Cash</span>
         </label>
         <label class="flex items-center space-x-2 cursor-pointer bg-white px-3 py-2 rounded border hover:bg-purple-50 transition">
             <input type="radio" name="payment_method" value="card" class="form-radio text-purple-600 h-4 w-4">
-            <span class="text-gray-800 font-medium">💳 Card</span>
+            <span class="text-gray-800 font-medium">Card</span>
+        </label>
+        <label class="flex items-center space-x-2 cursor-pointer bg-white px-3 py-2 rounded border hover:bg-pink-50 transition">
+            <input type="radio" name="payment_method" value="wallet" class="form-radio text-pink-600 h-4 w-4">
+            <span class="text-gray-800 font-medium"> Mobile Wallet</span>
         </label>
     </div>
 </div>

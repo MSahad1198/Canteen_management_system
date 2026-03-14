@@ -35,6 +35,11 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['in_stock', 'name']),
+        ]
+
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     cashier = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -47,6 +52,13 @@ class Order(models.Model):
 
     def __str__(self):
         return f'Order #{self.id} - {self.created_at:%Y-%m-%d %H:%M}'
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['created_at']),
+            models.Index(fields=['is_paid', 'cancelled', 'created_at']),
+            models.Index(fields=['cashier', 'created_at']),
+        ]
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')

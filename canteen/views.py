@@ -67,23 +67,23 @@ def pos_page(request):
     return render(request, 'canteen/pos.html')
 
 def api_products(request):
-    qs = Product.objects.filter(in_stock=True).order_by('name')
-    combos = Combo.objects.filter(show_in_pos=True)
+    qs = Product.objects.filter(in_stock=True).order_by('name').values('id', 'name', 'price', 'stock_qty')
+    combos = Combo.objects.filter(show_in_pos=True).values('id', 'name', 'final_price')
     data = []
 
     for p in qs:
         data.append({
-            'id': p.id,
-            'name': p.name,
-            'price': str(p.price),
-            'stock_qty': p.stock_qty,
+            'id': p['id'],
+            'name': p['name'],
+            'price': str(p['price']),
+            'stock_qty': p['stock_qty'],
             'type': 'product',
         })
     for c in combos:
         data.append({
-            'id': f"combo-{c.id}",
-            'name': f"🍱 {c.name}",
-            'price': str(c.final_price),
+            'id': f"combo-{c['id']}",
+            'name': f"🍱 {c['name']}",
+            'price': str(c['final_price']),
             'stock_qty': 'Combo',
             'type': 'combo',
         })
@@ -238,18 +238,18 @@ def daily_sales_report(request):
     # basic daily report for today
     today = timezone.localdate()
     orders = Order.objects.filter(created_at__date=today, is_paid=True, cancelled=False)
-    total = sum(o.total_amount for o in orders)
-    best_sellers = {}
-    for o in orders:
-        for it in o.items.all():
-            best_sellers.setdefault(it.product.name, 0)
-            best_sellers[it.product.name] += it.quantity
-    # convert to sorted list
-    best = sorted(best_sellers.items(), key=lambda x: -x[1])[:10]
+    sales_summary = orders.aggregate(total=Sum('total_amount'), orders_count=Count('id'))
+    best = list(
+        OrderItem.objects.filter(order__in=orders)
+        .values_list('product__name')
+        .annotate(total_qty=Sum('quantity'))
+        .order_by('-total_qty')[:10]
+    )
+
     return JsonResponse({
         'date': str(today),
-        'orders_count': orders.count(),
-        'total_sales': str(total),
+        'orders_count': sales_summary['orders_count'] or 0,
+        'total_sales': str(sales_summary['total'] or 0),
         'best_sellers': best
     })
 
@@ -307,7 +307,7 @@ def logout_view(request):
 
 @login_required
 def view_orders(request):
-    orders = Order.objects.all().order_by('-created_at')
+    orders = Order.objects.select_related('cashier').order_by('-created_at')
     return render(request, 'canteen/view_orders.html', {'orders': orders})
 
 def is_cashier(user):
@@ -336,7 +336,7 @@ def cashier_dashboard(request):
     pending_orders = orders_today.filter(is_paid=False).count()
 
     # Show the last 10 orders
-    recent_orders = orders_today.order_by('-created_at')[:10]
+    recent_orders = orders_today.select_related('cashier').order_by('-created_at')[:10]
 
     context = {
         'total_sales': f"{total_sales:.2f}",
@@ -589,17 +589,16 @@ def today_sales_detail(request):
         created_at__date=today, 
         is_paid=True, 
         cancelled=False
-    ).order_by('-created_at')
+    ).select_related('cashier').order_by('-created_at')
     
     # Calculate totals
-    total_sales = sum(o.total_amount for o in orders)
-    order_count = orders.count()
+    totals = orders.aggregate(total_sales=Sum('total_amount'), order_count=Count('id'))
     
     context = {
         'today': today,
         'orders': orders,
-        'total_sales': total_sales,
-        'order_count': order_count,
+        'total_sales': totals['total_sales'] or 0,
+        'order_count': totals['order_count'] or 0,
     }
     return render(request, 'canteen/today_sales_detail.html', context)
 
@@ -617,11 +616,10 @@ def weekly_sales_detail(request):
         created_at__date__range=[start_date, today],
         is_paid=True,
         cancelled=False
-    ).order_by('-created_at')
+    ).prefetch_related('items__product').order_by('-created_at')
     
     # Calculate Totals
-    total_sales = sum(o.total_amount for o in orders)
-    order_count = orders.count()
+    totals = orders.aggregate(total_sales=Sum('total_amount'), order_count=Count('id'))
 
     # Calculate Trending Products (Top 3)
     product_sales = {}
@@ -639,8 +637,8 @@ def weekly_sales_detail(request):
         'start_date': start_date,
         'end_date': today,
         'orders': orders,
-        'total_sales': total_sales,
-        'order_count': order_count,
+        'total_sales': totals['total_sales'] or 0,
+        'order_count': totals['order_count'] or 0,
         'trending_products': trending_products,
     }
     return render(request, 'canteen/weekly_sales_detail.html', context)
@@ -663,10 +661,10 @@ def yearly_sales_detail(request):
             created_at__month=month,
             is_paid=True,
             cancelled=False
-        )
+        ).prefetch_related('items__product')
         
         # Calculate Total Sales for the month
-        total_sales = sum(o.total_amount for o in orders)
+        total_sales = orders.aggregate(total=Sum('total_amount'))['total'] or 0
         
         # Calculate Top 3 Products for the month
         product_sales = {}
